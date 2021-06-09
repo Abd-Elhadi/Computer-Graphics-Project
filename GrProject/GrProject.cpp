@@ -13,7 +13,7 @@ using namespace std;
 
 COLORREF color = RGB(0,0,0);
 
-void Draw4Points(HDC hdc, int xc, int yc, int a, int b, COLORREF color)
+void Draw4Points(HDC hdc, int xc, int yc, int a, int b)
 {
     SetPixel(hdc, xc + a, yc + b, color);
     SetPixel(hdc, xc - a, yc + b, color);
@@ -38,16 +38,16 @@ public:
     void EllipseDirect(HDC hdc, int xc, int yc, int a, int b) {
         int x = 0, y = b;
         double b2 = b * b, a2 = a * a;
-        Draw4Points(hdc, xc, yc, x, y, color);
+        Draw4Points(hdc, xc, yc, x, y);
         while (b * b * x < a * a * y) {
             x++;
             y = round(sqrt(b2 * (double)(1.0 - 1.0 * x * x / a2)));
-            Draw4Points(hdc, xc, yc, x, y, color);
+            Draw4Points(hdc, xc, yc, x, y);
         }
         while (y > 0) {
             y--;
             x = round(sqrt(a2 * (double)(1.0 - 1.0 * y * y / b2)));
-            Draw4Points(hdc, xc, yc, x, y, color);
+            Draw4Points(hdc, xc, yc, x, y);
         }
     }
 };
@@ -65,13 +65,13 @@ public:
     }
     void polarellipse(HDC hdc, int xc, int yc, int  a, int  b) {
         int x = a, y = 0;
-        Draw4Points(hdc, xc, yc, x, y, color);
+        Draw4Points(hdc, xc, yc, x, y);
         double f = sqrt(a * a - b * b), e = f / a, b2 = b * b;
         for (double theta = 0.001; theta <= 3.14 / 2; theta += 0.001) {
             double R = a * b / sqrt((b * b * cos(theta) * cos(theta)) + (a * a * sin(theta) * sin(theta)));
             x = round(R * cos(theta));
             y = round(R * sin(theta));
-            Draw4Points(hdc, xc, yc, x, y, color);
+            Draw4Points(hdc, xc, yc, x, y);
         }
     }
 };
@@ -539,7 +539,6 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
     return messages.wParam;
 }
 
-
 /*  This functions are called by the Windows function DispatchMessage()  */
 DirectEllipse directtellipse;
 DirectCircle directcircle;
@@ -669,7 +668,9 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case Green_ID:
 			color = RGB(0, 200, 0);
 			break;
-
+		case Clear_ID:
+			InvalidateRect(hwnd, NULL, true);
+			break;
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
         }
