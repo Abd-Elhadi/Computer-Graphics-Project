@@ -19,6 +19,9 @@
 #define MidpointCircle_ID 15
 #define ModifiedMidpointCircle_ID 16
 #define PolygonEllipse_ID 17
-#define Blala_ID 18
+#define Black_ID 18
+#define Red_ID 19
+#define Blue_ID 20
+#define Green_ID 21
 
 #endif // MENU_H_INCLUDED

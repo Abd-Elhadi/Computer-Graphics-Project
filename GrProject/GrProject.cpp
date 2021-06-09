@@ -11,6 +11,7 @@
 #include "Resource.h"
 using namespace std;
 
+COLORREF color = RGB(0,0,0);
 
 void Draw4Points(HDC hdc, int xc, int yc, int a, int b, COLORREF color)
 {
@@ -31,10 +32,10 @@ public:
         xc = LOWORD(lParam);
         yc = HIWORD(lParam);
         hdc = GetDC(hwnd);
-        EllipseDirect(hdc, xc, yc, a, b, (255, 255, 0));
+        EllipseDirect(hdc, xc, yc, a, b);
         ReleaseDC(hwnd, hdc);
     }
-    void EllipseDirect(HDC hdc, int xc, int yc, int a, int b, COLORREF color) {
+    void EllipseDirect(HDC hdc, int xc, int yc, int a, int b) {
         int x = 0, y = b;
         double b2 = b * b, a2 = a * a;
         Draw4Points(hdc, xc, yc, x, y, color);
@@ -61,10 +62,10 @@ public:
         xc = LOWORD(lParam);
         yc = HIWORD(lParam);
         hdc = GetDC(hwnd);
-        polarellipse(hdc, xc, yc, a, b, (0, 255, 255));
+        polarellipse(hdc, xc, yc, a, b);
         ReleaseDC(hwnd, hdc);
     }
-    void polarellipse(HDC hdc, int xc, int yc, int  a, int  b, COLORREF color) {
+    void polarellipse(HDC hdc, int xc, int yc, int  a, int  b) {
         int x = a, y = 0;
         Draw4Points(hdc, xc, yc, x, y, color);
         double f = sqrt(a * a - b * b), e = f / a, b2 = b * b;
@@ -113,7 +114,7 @@ public:
         double dx = dt * (endPoint.x - startPoint.x);
         double dy = dt * (endPoint.y - startPoint.y);
         for (double t = 1; t <= numberOfPoints; t++) {
-            SetPixel(hdc, round(x), round(y), RGB(0, 0, 255));
+            SetPixel(hdc, round(x), round(y), color);
             x += dx;
             y += dy;
         }
@@ -153,12 +154,12 @@ public:
 
             int x = startPoint.x;
             double y = startPoint.y;
-            SetPixel(hdc, x, y, RGB(0, 255, 0));
+            SetPixel(hdc, x, y, color);
 
             while (x < endPoint.x) {
                 x++;
                 y += slope;
-                SetPixel(hdc, x, y, RGB(0, 255, 0));
+                SetPixel(hdc, x, y, color);
             }
         }
 
@@ -173,12 +174,12 @@ public:
 
             double x = startPoint.x;
             int y = startPoint.y;
-            SetPixel(hdc, x, y, RGB(41, 41, 41));
+            SetPixel(hdc, x, y, color);
 
             while (y < endPoint.y) {
                 y++;
                 x += slope;
-                SetPixel(hdc, x, y, RGB(41, 41, 41));
+                SetPixel(hdc, x, y, color);
             }
         }
     }
@@ -211,7 +212,7 @@ public:
             int d = dy - (dx / 2);
             int x = startPoint.x;
             double y = startPoint.y;
-            SetPixel(hdc, x, y, RGB(41, 41, 41));
+            SetPixel(hdc, x, y, color);
 
             while (x < endPoint.x) {
                 x++;
@@ -222,7 +223,7 @@ public:
                     d += (dy - dx);
                     y++;
                 }
-                SetPixel(hdc, x, y, RGB(255, 0, 0));
+                SetPixel(hdc, x, y, color);
             }
         }
         else if (dx < dy) {
@@ -238,7 +239,7 @@ public:
                     d += (dx - dy);
                     x++;
                 }
-                SetPixel(hdc, x, y, RGB(255, 0, 0));
+                SetPixel(hdc, x, y, color);
             }
         }
     }
@@ -449,6 +450,19 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             break;
         case MidPointLine_ID:
             flag = 5;
+			break;
+		case Black_ID:
+			color = RGB(0, 0, 0);
+			break;
+		case Red_ID:
+			color = RGB(200, 0, 0);
+			break;
+		case Blue_ID:
+			color = RGB(0, 0, 200);
+			break;
+		case Green_ID:
+			color = RGB(0, 200, 0);
+			break;
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
         }
