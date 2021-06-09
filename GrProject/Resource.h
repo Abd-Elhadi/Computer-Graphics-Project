@@ -23,5 +23,5 @@
 #define Red_ID 19
 #define Blue_ID 20
 #define Green_ID 21
-
+#define Clear_ID 22
 #endif // MENU_H_INCLUDED
