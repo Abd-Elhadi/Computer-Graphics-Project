@@ -41,7 +41,7 @@ void drawPixel(HDC hdc, int x, int y, COLORREF color) {
 	else if (color == green) {
 		cString = "3";
 	}
-	string line = xString + "-" + yString + "-" + cString;
+	string line = xString + "," + yString + "," + cString;
 	allPoints.push_back(line);
 }
 
@@ -76,7 +76,7 @@ void loadData(HDC hdc) {
 	ifstream file("data.txt");
 
 	while (getline(file, line)) {
-		splitLine = split(line, '-');
+		splitLine = split(line, ',');
 		int x = stol(splitLine.at(0));
 		int y = stol(splitLine.at(1));
 		int c = stol(splitLine.at(2));
@@ -134,8 +134,6 @@ public:
         }
     }
 };
-
-
 class PolarEllipse {
 public:
     int a = 80, b = 60, xc, yc;
@@ -160,8 +158,6 @@ public:
         }
     }
 };
-
-
 class Point {
 public:
     double x;
@@ -204,7 +200,6 @@ public:
     }
 };
 class DDALine {
-
 public:
     int counter = 0;
     Point p1, p2;
@@ -268,12 +263,13 @@ public:
     }
 };
 
+
 class MidpointLine {
-public:
     int counter = 0;
     Point p1, p2;
+public:
     void lbutton(LPARAM lParam, HWND hwnd) {
-        if (counter == 0){
+        if (counter == 0) {
             p1.x = LOWORD(lParam);
             p1.y = HIWORD(lParam);
         }
@@ -286,61 +282,97 @@ public:
         }
         ++counter;
     }
+    //Bresenham (midpoint) algorithm (integer DDA) 
     void midpointLine(HDC hdc, Point startPoint, Point endPoint) {
-        double dx = endPoint.x - startPoint.x;
-        double dy = endPoint.y - startPoint.y;
+        //convert all doubles to int (the algorithm works on int only)
+        int xs = (int)startPoint.x; 
+        int ys = (int)startPoint.y;
+        int xe = (int)endPoint.x;
+        int ye = (int)endPoint.y;
 
-        // slope < 1, x is the independent variable
-        if (abs(dy) < abs(dx)) {
-            int d = dy - (dx / 2);
-            int x = startPoint.x;
-            double y = startPoint.y;
+        int deltaX = xe - xs;
+        int deltaY = ye - ys;
+
+        if (abs(deltaY) <= abs(deltaX)) {
+            if (xs > xe) {
+                swap(xs, xe);
+                swap(ys, ye);
+            }
+
+            deltaX = abs(deltaX);
+            deltaY = abs(deltaY);
+            int error = 2 * deltaY - deltaX;
+            int d1 = 2 * deltaY;
+            int d2 = 2 * (deltaY - deltaX);
+
+            int x = xs;
+            int y = ys;
+
+            int increment;
+            if (ys < ye)
+                increment = 1;
+            else
+                increment = -1;
+
 			drawPixel(hdc, x, y, color);
-
-            while (x < endPoint.x) {
-                x++;
-                if (d < 0)
-                    d = d + dy;
-
+            while (x < xe) {
+                if (error < 0)
+                    error += d1;
                 else {
-                    d += (dy - dx);
-                    y++;
+                    error += d2;
+                    y += increment;
                 }
+                x++;
 				drawPixel(hdc, x, y, color);
             }
         }
-        else if (dx < dy) {
-            int d = dx - (dy / 2);
-            int x = startPoint.x, y = startPoint.y;
+        else {
+            if (ys > ye) {
+                swap(xs, xe);
+                swap(ys, ye);
+            }
+            deltaX = abs(deltaX);
+            deltaY = abs(deltaY);
 
-            while (y < endPoint.y) {
-                y++;
-                if (d < 0)
-                    d = d + dx;
+            int error = 2 * deltaX - deltaY;
+            int d1 = 2 * deltaX;
+            int d2 = 2 * (deltaX - deltaY);
 
+            int x = xs;
+            int y = ys;
+
+            int increment;
+            if (xs < xe)
+                increment = 1;
+            else
+                increment = -1;
+
+			drawPixel(hdc, x, y, color);
+            while (y < ye) {
+                if (error < 0)
+                    error += d1;
                 else {
-                    d += (dx - dy);
-                    x++;
+                    error += d2;
+                    x += increment;
                 }
-                SetPixel(hdc, x, y, color);
+                y++;
+				drawPixel(hdc, x, y, color);
             }
         }
     }
 };
 
-
 void draweight(HDC hdc, int x, int y, int xc, int yc) {
-    SetPixel(hdc, xc + x, yc + y, color);
-    SetPixel(hdc, xc - x, yc + y, color);
-    SetPixel(hdc, xc + x, yc - y, color);
-    SetPixel(hdc, xc - x, yc - y, color);
+	drawPixel(hdc, xc + x, yc + y, color);
+	drawPixel(hdc, xc - x, yc + y, color);
+	drawPixel(hdc, xc + x, yc - y, color);
+	drawPixel(hdc, xc - x, yc - y, color);
 
-    SetPixel(hdc, xc - y, yc + x, color);
-    SetPixel(hdc, xc + y, yc - x, color);
-    SetPixel(hdc, xc + y, yc + x, color);
-    SetPixel(hdc, xc - y, yc - x, color);
+	drawPixel(hdc, xc - y, yc + x, color);
+	drawPixel(hdc, xc + y, yc - x, color);
+	drawPixel(hdc, xc + y, yc + x, color);
+	drawPixel(hdc, xc - y, yc - x, color);
 }
-
 
 class DirectCircle {
 public:
@@ -466,10 +498,7 @@ public:
             }
             draweight(hdc, x, y, xc, yc);
         }
-
     }
-
-
 };
 
 class ModifiedMidpointCircle
@@ -515,6 +544,161 @@ public:
 private:
 
 };
+
+
+class PointClipping
+{
+public:
+    int counter = 0;
+    Point p1;
+    Point p2;
+    Point p3;
+
+    void lbutton(LPARAM lParam, HWND hwnd) {
+        HDC hdc = GetDC(hwnd);
+        if (counter == 0) {
+            p1.x = LOWORD(lParam);
+            p1.y = HIWORD(lParam);
+            counter++;
+        }
+        else if(counter==1){
+            p2.x = LOWORD(lParam);
+            p2.y = HIWORD(lParam);
+            Rectangle(hdc, p1.x, p1.y , p2.x , p2.y);
+            counter++;
+        }
+        else if(counter == 2) {
+            p3.x = LOWORD(lParam);
+            p3.y = HIWORD(lParam);
+            pointclipping(hdc, p3.x, p3.y, p1.x, p1.y, p2.x, p2.y);
+            counter = 0;
+
+        }
+    }
+    void pointclipping(HDC hdc, int x, int y, int xleft, int ytop, int xright, int ybottom)
+    {
+        if (x >= xleft && x <= xright && y >= ytop && y <= ybottom)
+			drawPixel(hdc, x, y, color);
+    }
+};
+
+
+union OutCode
+{
+    unsigned All : 4;
+    struct
+    {
+        unsigned left : 1, top : 1, right : 1, bottom : 1;
+    };
+};
+OutCode GetOutCode(double x, double y, int xleft, int ytop, int xright, int ybottom)
+{
+    OutCode out;
+    out.All = 0;
+    if (x < xleft)
+        out.left = 1;
+    else if (x > xright)
+        out.right = 1;
+    if (y < ytop)
+        out.top = 1;
+    else if (y > ybottom)
+        out.bottom = 1;
+    return out;
+}
+
+class lineClipping
+{
+public:
+    int counter = 0;
+    Point p1;
+    Point p2;
+    Point p3;
+    Point p4;
+
+    void lbutton(LPARAM lParam, HWND hwnd) {
+        HDC hdc = GetDC(hwnd);
+        if (counter == 0) {
+            p1.x = LOWORD(lParam);
+            p1.y = HIWORD(lParam);
+            counter++;
+        }
+        else if (counter == 1) {
+            p2.x = LOWORD(lParam);
+            p2.y = HIWORD(lParam);
+            Rectangle(hdc, p1.x, p1.y, p2.x, p2.y);
+            counter++;
+        }
+        else if (counter == 2) {
+            p3.x = LOWORD(lParam);
+            p3.y = HIWORD(lParam);
+            counter++;
+        }
+        else if (counter == 3) {
+            p4.x = LOWORD(lParam);
+            p4.y = HIWORD(lParam);
+            CohenSuth(hdc, p3.x, p3.y, p4.x, p4.y, p1.x, p1.y, p2.x, p2.y);
+            counter = 0;
+
+        }
+    }
+
+    void VIntersect(double xs, double ys, double xe, double ye, int x, double* xi, double* yi)
+    {
+        *xi = x;
+        *yi = ys + (x - xs) * (ye - ys) / (xe - xs);
+    }
+    void HIntersect(double xs, double ys, double xe, double ye, int y, double* xi, double* yi)
+    {
+        *yi = y;
+        *xi = xs + (y - ys) * (xe - xs) / (ye - ys);
+    }
+    void CohenSuth(HDC hdc, int xs, int ys, int xe, int ye, int xleft, int ytop, int xright, int ybottom)
+    {
+        double x1 = xs, y1 = ys, x2 = xe, y2 = ye;
+        OutCode out1 = GetOutCode(x1, y1, xleft, ytop, xright, ybottom);
+        OutCode out2 = GetOutCode(x2, y2, xleft, ytop, xright, ybottom);
+        while ((out1.All || out2.All) && !(out1.All & out2.All))
+        {
+            double xi, yi;
+            if (out1.All)
+            {
+                if (out1.left)
+                    VIntersect(x1, y1, x2, y2, xleft, &xi, &yi);
+                else if (out1.top)
+                    HIntersect(x1, y1, x2, y2, ytop, &xi, &yi);
+                else if (out1.right)
+                    VIntersect(x1, y1, x2, y2, xright, &xi, &yi);
+                else
+                    HIntersect(x1, y1, x2, y2, ybottom, &xi, &yi);
+                x1 = xi;
+                y1 = yi;
+                out1 = GetOutCode(x1, y1, xleft, ytop, xright, ybottom);
+            }
+            else
+            {
+                if (out2.left)
+                    VIntersect(x1, y1, x2, y2, xleft, &xi, &yi);
+                else if (out2.top)
+                    HIntersect(x1, y1, x2, y2, ytop, &xi, &yi);
+                else if (out2.right)
+                    VIntersect(x1, y1, x2, y2, xright, &xi, &yi);
+                else
+                    HIntersect(x1, y1, x2, y2, ybottom, &xi, &yi);
+                x2 = xi;
+                y2 = yi;
+                out2 = GetOutCode(x2, y2, xleft, ytop, xright, ybottom);
+            }
+        }
+        if (!out1.All && !out2.All)
+        {
+
+            MoveToEx(hdc, round(x1), round(y1), NULL);
+            LineTo(hdc, round(x2), round(y2));
+        }
+    }
+
+};
+
 
 
 /*  Declare Windows procedure  */
@@ -596,6 +780,8 @@ PolarEllipse polarEllipse;
 ParametricLine parLine;
 MidpointLine midpoLine;
 DDALine dLine;
+PointClipping pointclipping;
+lineClipping lineclipping;
 
 int flag = 0;
 int var;
@@ -647,28 +833,16 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 modifiedmidpointcircle.lbutton(lParam, hwnd);
                 break;
             }
-
-        }
-        break;
-    }
-    case WM_LBUTTONUP: {
-        //break;
-    }
-    case WM_RBUTTONDOWN:
-    {
-        //clipping
-        /*
-        switch (flag) {
-            case 3: {
-                //clip.rbutton();
+            case 11: {
+                pointclipping.lbutton(lParam, hwnd);
                 break;
             }
+            case 12: {
+                lineclipping.lbutton(lParam, hwnd);
+                break;
+            }
+
         }
-        */
-        //break;
-        
-    }
-    case WM_RBUTTONUP: {
         break;
     }
     case WM_COMMAND: {
@@ -692,7 +866,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             flag = 2;
             break;
         case ParametricLine_ID:
-            //lineParametric = true;
             flag = 3;
             break;
         case LineDDA_ID:
@@ -716,7 +889,13 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case ModifiedMidpointCircle_ID:
             flag = 10;
             break;
-		case Black_ID:
+        case PointClipping_ID:
+            flag = 11;
+            break;
+        case LineClipping_ID:
+            flag = 12;
+            break;
+        case Black_ID:
 			color = RGB(0, 0, 0);
 			break;
 		case Red_ID:
@@ -728,7 +907,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case Green_ID:
 			color = RGB(0, 200, 0);
 			break;
-		case Clear_ID:
+		case Clear_ID :
 			InvalidateRect(hwnd, NULL, true);
 			allPoints.clear();
 			break;
