@@ -248,8 +248,20 @@ public:
 
 class DirectCircle {
 public:
-    DirectCircle();
-    ~DirectCircle();
+
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
+
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        //Direct(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
+    }
+
+   
+   
 
 private:
 
@@ -277,10 +289,46 @@ private:
 
 class MidpointCircle {
 public:
-    MidpointCircle();
-    ~MidpointCircle();
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
 
-private:
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        midpoint(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
+    }
+    void draweight(HDC hdc, int x, int y, int xc, int yc) {
+        SetPixel(hdc, xc + x, yc + y, color);
+        SetPixel(hdc, xc - x, yc + y, color);
+        SetPixel(hdc, xc + x, yc - y, color);
+        SetPixel(hdc, xc - x, yc - y, color);
+
+        SetPixel(hdc, xc - y, yc + x, color);
+        SetPixel(hdc, xc + y, yc - x, color);
+        SetPixel(hdc, xc + y, yc + x, color);
+        SetPixel(hdc, xc - y, yc - x, color);
+    }
+    void midpoint(HDC hdc, int xc, int yc, int r) {
+        int x = 0;
+        int y = r;
+        double d = 1 - r;
+        while (x < y) {
+            if (d <= 0) {
+                d = d + 2 * x + 3;
+                x++;
+            }
+            else {
+                d = d + 2 * (x - y) + 5;
+                x++;
+                y--;
+            }
+            draweight(hdc, x, y, xc, yc);
+        }
+
+    }
+
 
 };
 
@@ -369,7 +417,7 @@ DirectEllipse directtellipse;
 //direct_circle directcircle;
 //polar_circle polarcircle;
 //interactive_circle interactivecircle;
-//midpoint_circle midpointcircle;
+MidpointCircle midpointcircle;
 //modified_midpoint_circle modifiedmidpointcircle;
 PolarEllipse polarEllipse;
 ParametricLine parLine;
@@ -381,6 +429,7 @@ int var;
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
     /* handle the messages */
     switch (message) {
     case WM_LBUTTONDOWN: {
@@ -395,12 +444,19 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             }
             case 3: {
                 parLine.lbutton(lParam, hwnd);
+                break;
             }
             case 4:{
                 dLine.lbutton(lParam, hwnd);
+                break;
             }
             case 5: {
                 midpoLine.lbutton(lParam, hwnd);
+                break;
+            }
+            case 6: {
+               midpointcircle.lbutton(lParam, hwnd);
+               break;
             }
         }
         break;
@@ -451,6 +507,9 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case MidPointLine_ID:
             flag = 5;
 			break;
+        case MidpointCircle_ID:
+            flag = 6;
+            break;
 		case Black_ID:
 			color = RGB(0, 0, 0);
 			break;
@@ -463,6 +522,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case Green_ID:
 			color = RGB(0, 200, 0);
 			break;
+
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
         }
