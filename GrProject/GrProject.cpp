@@ -9,17 +9,100 @@
 #include <vector>
 #include <math.h>
 #include "Resource.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
 using namespace std;
 
 COLORREF color = RGB(0,0,0);
+vector<string> allPoints;
+
+void drawPixel(HDC hdc, int x, int y, COLORREF color) {
+	COLORREF black = RGB(0, 0, 0);
+	COLORREF red = RGB(200, 0, 0);
+	COLORREF blue = RGB(0, 0, 200);
+	COLORREF green = RGB(0, 200, 0);
+
+	SetPixel(hdc, x, y, color);
+
+	string xString = to_string(x);
+	string yString = to_string(y);
+	string cString = "0";
+	if (color == black) {
+		cString = "0";
+	}
+	else if (color == red) {
+		cString = "1";
+	}
+	else if (color == blue) {
+		cString = "2";
+	}
+	else if (color == green) {
+		cString = "3";
+	}
+	string line = xString + "-" + yString + "-" + cString;
+	allPoints.push_back(line);
+}
+
+vector<string> split(string line, char token) {
+	vector<string> splitVector;
+	string temp = "";
+	for (int i = 0; i < line.length(); i++) {
+		if (line[i] != token) {
+			temp += line[i];
+		} else {
+			splitVector.push_back(temp);
+			temp = "";
+		}
+	}
+	if (temp != "") {
+		splitVector.push_back(temp);
+	}
+	return splitVector;
+}
+
+void saveData() {
+	ofstream file("data.txt");
+	for (auto i = allPoints.begin(); i != allPoints.end(); ++i) {
+		file << *i << "\n";
+	}
+	file.close();
+}
+
+void loadData(HDC hdc) {
+	string line;
+	vector<string> splitLine;
+	ifstream file("data.txt");
+
+	while (getline(file, line)) {
+		splitLine = split(line, '-');
+		int x = stol(splitLine.at(0));
+		int y = stol(splitLine.at(1));
+		int c = stol(splitLine.at(2));
+		if (c == 0) {
+			drawPixel(hdc, x, y, RGB(0, 0, 0));
+		}
+		else if (c == 1) {
+			drawPixel(hdc, x, y, RGB(200, 0, 0));
+		}
+		else if (c == 2) {
+			drawPixel(hdc, x, y, RGB(0, 0, 200));
+		}
+		else if (c == 3) {
+			drawPixel(hdc, x, y, RGB(0, 200, 0));
+		}
+	}
+
+	file.close();
+}
 
 void Draw4Points(HDC hdc, int xc, int yc, int a, int b)
 {
-    SetPixel(hdc, xc + a, yc + b, color);
-    SetPixel(hdc, xc - a, yc + b, color);
-    SetPixel(hdc, xc - a, yc - b, color);
-    SetPixel(hdc, xc + a, yc - b, color);
-
+	drawPixel(hdc, xc + a, yc + b, color);
+	drawPixel(hdc, xc - a, yc + b, color);
+	drawPixel(hdc, xc - a, yc - b, color);
+	drawPixel(hdc, xc + a, yc - b, color);
 }
 
 //midpoint ellepse 
@@ -114,7 +197,7 @@ public:
         double dx = dt * (endPoint.x - startPoint.x);
         double dy = dt * (endPoint.y - startPoint.y);
         for (double t = 1; t <= numberOfPoints; t++) {
-            SetPixel(hdc, round(x), round(y), color);
+			drawPixel(hdc, round(x), round(y), color);
             x += dx;
             y += dy;
         }
@@ -154,12 +237,12 @@ public:
 
             int x = startPoint.x;
             double y = startPoint.y;
-            SetPixel(hdc, x, y, color);
+			drawPixel(hdc, x, y, color);
 
             while (x < endPoint.x) {
                 x++;
                 y += slope;
-                SetPixel(hdc, x, y, color);
+				drawPixel(hdc, x, y, color);
             }
         }
 
@@ -174,12 +257,12 @@ public:
 
             double x = startPoint.x;
             int y = startPoint.y;
-            SetPixel(hdc, x, y, color);
+			drawPixel(hdc, x, y, color);
 
             while (y < endPoint.y) {
                 y++;
                 x += slope;
-                SetPixel(hdc, x, y, color);
+				drawPixel(hdc, x, y, color);
             }
         }
     }
@@ -212,7 +295,7 @@ public:
             int d = dy - (dx / 2);
             int x = startPoint.x;
             double y = startPoint.y;
-            SetPixel(hdc, x, y, color);
+			drawPixel(hdc, x, y, color);
 
             while (x < endPoint.x) {
                 x++;
@@ -223,7 +306,7 @@ public:
                     d += (dy - dx);
                     y++;
                 }
-                SetPixel(hdc, x, y, color);
+				drawPixel(hdc, x, y, color);
             }
         }
         else if (dx < dy) {
@@ -592,9 +675,13 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         var = LOWORD(wParam);
         switch (var) {
         case Save_ID:
+			saveData();
             break;
-        case Load_ID:
-            break;
+		case Load_ID: {
+			HDC hdc = GetDC(hwnd);
+			loadData(hdc);
+			break;
+		}
         case Exit_ID:
             PostQuitMessage(0);
             break;
@@ -643,6 +730,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			break;
 		case Clear_ID:
 			InvalidateRect(hwnd, NULL, true);
+			allPoints.clear();
 			break;
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
