@@ -18,6 +18,8 @@ using namespace std;
 COLORREF color = RGB(0,0,0);
 vector<string> allPoints;
 
+
+
 void drawPixel(HDC hdc, int x, int y, COLORREF color) {
 	COLORREF black = RGB(0, 0, 0);
 	COLORREF red = RGB(200, 0, 0);
@@ -699,6 +701,20 @@ public:
 
 };
 
+DirectEllipse directtellipse;
+DirectCircle directcircle;
+PolarCircle polarcircle;
+InteractiveCircle interactivecircle;
+MidpointCircle midpointcircle;
+ModifiedMidpointCircle modifiedmidpointcircle;
+PolarEllipse polarEllipse;
+ParametricLine parLine;
+MidpointLine midpoLine;
+DDALine dLine;
+PointClipping pointclipping;
+lineClipping lineclipping;
+
+
 class Filling
 {
 
@@ -710,52 +726,105 @@ public:
     void lbutton(LPARAM lParam, HWND hwnd) {
         HDC hdc = GetDC(hwnd);
         if (counter == 0) {
+            midpointcircle.lbutton(lParam, hwnd);
             p1.x = LOWORD(lParam);
             p1.y = HIWORD(lParam);
-//            midpointcircle.lbutton(lParam, hwnd);
             counter++;
         }
         else if (counter == 1) {
             p2.x = LOWORD(lParam);
             p2.y = HIWORD(lParam);
-            counter++;
+            findQuarter(hdc,p2.x, p2.y, p1.x, p1.y);
+            counter = 0;
+        }
+    }
+
+   
+    void drawLine(HDC hdc, int x1, int y1, int x2, int y2) {
+        double dx = x2 - x1;
+        double dy = y2 - y1;
+        for (double t = 0; t < 1; t += 0.001) {
+            int x = x1 + (dx * t);
+            int y = y1 + (dy * t);
+            SetPixel(hdc, x, y, color);
+        }
+
+    }
+
+    void findQuarter(HDC hdc,int x, int y, int xc, int yc)
+    {
+
+        if ((x >= 0 and y > 0) || (x == 0 & y == 0))
+        {
+            fill(hdc, xc, yc, 1);
+
+        }
+
+        else if (x <= 0 and y > 0)
+        {
+            fill(hdc, xc, yc, 2);
+
+        }
+
+        else if (x < 0 and y <= 0)
+        {
+            fill(hdc, xc, yc, 3);
+
+        }
+        else if (x > 0 and y <= 0)
+        {
+            fill(hdc, xc, yc, 4);
+
         }
     }
 
 
-   /* void quadrant(int x, int y)
-    {
-
-        if (x > 0 and y > 0)
-            cout << "lies in First quadrant";
-
-        else if (x < 0 and y > 0)
-            cout << "lies in Second quadrant";
-
-        else if (x < 0 and y < 0)
-            cout << "lies in Third quadrant";
-
-        else if (x > 0 and y < 0)
-            cout << "lies in Fourth quadrant";
-
-        else if (x == 0 and y > 0)
-            cout << "lies at positive y axis";
-
-        else if (x == 0 and y < 0)
-            cout << "lies at negative y axis";
-
-        else if (y == 0 and x < 0)
-            cout << "lies at negative x axis";
-
-        else if (y == 0 and x > 0)
-            cout << "lies at positive x axis";
-
-        else
-            cout << "lies at origin";
+    void fill(HDC hdc, int xc, int yc, int quarter) {
+        int r = 80;
+        int x = 0;
+        int y = r;
+        double d = 1 - r;
+        while (x < y) {
+            if (d <= 0) {
+                d = d + 2 * x + 3;
+                x++;
+            }
+            else {
+                d = d + 2 * (x - y) + 5;
+                x++;
+                y--;
+            }
+            draw(hdc, x, y, xc, yc, quarter);
+        }
     }
-    */
+    void draw(HDC hdc, int x, int y, int xc, int yc, int quarter) {
+
+        if (quarter == 1) {
+            drawLine(hdc, xc,  yc , xc + x, yc - y); //1
+            drawLine(hdc, xc, yc, xc + y, yc - x); //2
+        }
+        else if (quarter == 2) {
+            drawLine(hdc, xc, yc, xc + y, yc + x); //4
+            drawLine(hdc, xc, yc, xc - y, yc - x); //3
+
+        }
+        else if (quarter == 3) {
+            drawLine(hdc, xc, yc, xc - x, yc + y);//5
+            drawLine(hdc, xc, yc, xc - y, yc + x); //6
+        }
+        else if (quarter == 4) {
+            drawLine(hdc, xc, yc, xc + x, yc + y); //7
+            drawLine(hdc, xc, yc, xc - x, yc - y); //8
+        }
+    }
 
 };
+
+void printData() {
+    cout << "Hello World";
+}
+
+Filling circleFilling;
 
 
 
@@ -828,19 +897,6 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
 }
 
 /*  This functions are called by the Windows function DispatchMessage()  */
-DirectEllipse directtellipse;
-DirectCircle directcircle;
-PolarCircle polarcircle;
-InteractiveCircle interactivecircle;
-MidpointCircle midpointcircle;
-ModifiedMidpointCircle modifiedmidpointcircle;
-PolarEllipse polarEllipse;
-ParametricLine parLine;
-MidpointLine midpoLine;
-DDALine dLine;
-PointClipping pointclipping;
-lineClipping lineclipping;
-Filling circleFilling;
 
 int flag = 0;
 int var;
@@ -851,6 +907,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     /* handle the messages */
     switch (message) {
     case WM_LBUTTONDOWN: {
+        printData();
         switch (flag) {
             case 1: {
                 directtellipse.lbutton(hwnd, lParam);
@@ -901,7 +958,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 break;
             }
             case 13: {
-                circleFilling;
+                circleFilling.lbutton(lParam, hwnd);
                 break;
             }
 
