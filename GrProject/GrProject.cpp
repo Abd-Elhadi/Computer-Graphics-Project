@@ -617,6 +617,64 @@ public:
 
 };
 
+class Filling
+{
+
+public:
+    int counter = 0;
+    Point p1;
+    Point p2;
+
+    void lbutton(LPARAM lParam, HWND hwnd) {
+        HDC hdc = GetDC(hwnd);
+        if (counter == 0) {
+            p1.x = LOWORD(lParam);
+            p1.y = HIWORD(lParam);
+//            midpointcircle.lbutton(lParam, hwnd);
+            counter++;
+        }
+        else if (counter == 1) {
+            p2.x = LOWORD(lParam);
+            p2.y = HIWORD(lParam);
+            counter++;
+        }
+    }
+
+
+   /* void quadrant(int x, int y)
+    {
+
+        if (x > 0 and y > 0)
+            cout << "lies in First quadrant";
+
+        else if (x < 0 and y > 0)
+            cout << "lies in Second quadrant";
+
+        else if (x < 0 and y < 0)
+            cout << "lies in Third quadrant";
+
+        else if (x > 0 and y < 0)
+            cout << "lies in Fourth quadrant";
+
+        else if (x == 0 and y > 0)
+            cout << "lies at positive y axis";
+
+        else if (x == 0 and y < 0)
+            cout << "lies at negative y axis";
+
+        else if (y == 0 and x < 0)
+            cout << "lies at negative x axis";
+
+        else if (y == 0 and x > 0)
+            cout << "lies at positive x axis";
+
+        else
+            cout << "lies at origin";
+    }
+    */
+
+};
+
 
 
 /*  Declare Windows procedure  */
@@ -700,6 +758,7 @@ MidpointLine midpoLine;
 DDALine dLine;
 PointClipping pointclipping;
 lineClipping lineclipping;
+Filling circleFilling;
 
 int flag = 0;
 int var;
@@ -759,6 +818,10 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 lineclipping.lbutton(lParam, hwnd);
                 break;
             }
+            case 13: {
+                circleFilling;
+                break;
+            }
 
         }
         break;
@@ -809,6 +872,8 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case LineClipping_ID:
             flag = 12;
             break;
+        case Filling_ID:
+            flag = 13;
         case Black_ID:
 			color = RGB(0, 0, 0);
 			break;
