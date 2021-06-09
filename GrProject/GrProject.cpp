@@ -117,7 +117,6 @@ public:
     }
 };
 class DDALine {
-
 public:
     int counter = 0;
     Point p1, p2;
@@ -181,12 +180,13 @@ public:
     }
 };
 
+
 class MidpointLine {
-public:
     int counter = 0;
     Point p1, p2;
+public:
     void lbutton(LPARAM lParam, HWND hwnd) {
-        if (counter == 0){
+        if (counter == 0) {
             p1.x = LOWORD(lParam);
             p1.y = HIWORD(lParam);
         }
@@ -199,60 +199,85 @@ public:
         }
         ++counter;
     }
+    //Bresenham (midpoint) algorithm (integer DDA) 
     void midpointLine(HDC hdc, Point startPoint, Point endPoint) {
-        double dx = endPoint.x - startPoint.x;
-        double dy = endPoint.y - startPoint.y;
+        //convert all doubles to int (the algorithm works on int only)
+        int xs = (int)startPoint.x; 
+        int ys = (int)startPoint.y;
+        int xe = (int)endPoint.x;
+        int ye = (int)endPoint.y;
 
-        // slope < 1, x is the independent variable
-        if (abs(dy) < abs(dx)) {
-            int d = dy - (dx / 2);
-            int x = startPoint.x;
-            double y = startPoint.y;
+        int deltaX = xe - xs;
+        int deltaY = ye - ys;
+
+        if (abs(deltaY) <= abs(deltaX)) {
+            if (xs > xe) {
+                swap(xs, xe);
+                swap(ys, ye);
+            }
+
+            deltaX = abs(deltaX);
+            deltaY = abs(deltaY);
+            int error = 2 * deltaY - deltaX;
+            int d1 = 2 * deltaY;
+            int d2 = 2 * (deltaY - deltaX);
+
+            int x = xs;
+            int y = ys;
+
+            int increment;
+            if (ys < ye)
+                increment = 1;
+            else
+                increment = -1;
+
             SetPixel(hdc, x, y, color);
-
-            while (x < endPoint.x) {
-                x++;
-                if (d < 0)
-                    d = d + dy;
-
+            while (x < xe) {
+                if (error < 0)
+                    error += d1;
                 else {
-                    d += (dy - dx);
-                    y++;
+                    error += d2;
+                    y += increment;
                 }
+                x++;
                 SetPixel(hdc, x, y, color);
             }
         }
-        else if (dx < dy) {
-            int d = dx - (dy / 2);
-            int x = startPoint.x, y = startPoint.y;
+        else {
+            if (ys > ye) {
+                swap(xs, xe);
+                swap(ys, ye);
+            }
+            deltaX = abs(deltaX);
+            deltaY = abs(deltaY);
 
-            while (y < endPoint.y) {
-                y++;
-                if (d < 0)
-                    d = d + dx;
+            int error = 2 * deltaX - deltaY;
+            int d1 = 2 * deltaX;
+            int d2 = 2 * (deltaX - deltaY);
 
+            int x = xs;
+            int y = ys;
+
+            int increment;
+            if (xs < xe)
+                increment = 1;
+            else
+                increment = -1;
+
+            SetPixel(hdc, x, y, color);
+            while (y < ye) {
+                if (error < 0)
+                    error += d1;
                 else {
-                    d += (dx - dy);
-                    x++;
+                    error += d2;
+                    x += increment;
                 }
+                y++;
                 SetPixel(hdc, x, y, color);
             }
         }
     }
 };
-
-
-void draweight(HDC hdc, int x, int y, int xc, int yc) {
-    SetPixel(hdc, xc + x, yc + y, color);
-    SetPixel(hdc, xc - x, yc + y, color);
-    SetPixel(hdc, xc + x, yc - y, color);
-    SetPixel(hdc, xc - x, yc - y, color);
-
-    SetPixel(hdc, xc - y, yc + x, color);
-    SetPixel(hdc, xc + y, yc - x, color);
-    SetPixel(hdc, xc + y, yc + x, color);
-    SetPixel(hdc, xc - y, yc - x, color);
-}
 
 
 class DirectCircle {
@@ -379,10 +404,7 @@ public:
             }
             draweight(hdc, x, y, xc, yc);
         }
-
     }
-
-
 };
 
 class ModifiedMidpointCircle
