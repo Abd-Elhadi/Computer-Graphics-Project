@@ -51,8 +51,6 @@ public:
         }
     }
 };
-
-
 class PolarEllipse {
 public:
     int a = 80, b = 60, xc, yc;
@@ -77,8 +75,6 @@ public:
         }
     }
 };
-
-
 class Point {
 public:
     double x;
@@ -434,6 +430,47 @@ private:
 };
 
 
+class PointClipping
+{
+public:
+    int counter = 0;
+    Point p1;
+    Point p2;
+    Point p3;
+
+    void lbutton(LPARAM lParam, HWND hwnd) {
+        HDC hdc = GetDC(hwnd);
+        if (counter == 0) {
+            p1.x = LOWORD(lParam);
+            p1.y = HIWORD(lParam);
+            counter++;
+        }
+        else if(counter==1){
+            p2.x = LOWORD(lParam);
+            p2.y = HIWORD(lParam);
+            Rectangle(hdc, p1.x, p1.y , p2.x , p2.y);
+            counter++;
+        }
+        else if(counter == 2) {
+            p3.x = LOWORD(lParam);
+            p3.y = HIWORD(lParam);
+            pointclipping(hdc, p3.x, p3.y, p1.x, p1.y, p2.x, p2.y);
+            counter = 0;
+
+        }
+    }
+    void pointclipping(HDC hdc, int x, int y, int xleft, int ytop, int xright, int ybottom)
+    {
+        if (x >= xleft && x <= xright && y >= ytop && y <= ybottom)
+
+            SetPixel(hdc, x, y, color);
+    }
+
+
+
+
+};
+
 /*  Declare Windows procedure  */
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
@@ -514,6 +551,7 @@ PolarEllipse polarEllipse;
 ParametricLine parLine;
 MidpointLine midpoLine;
 DDALine dLine;
+PointClipping pointclipping;
 
 int flag = 0;
 int var;
@@ -565,28 +603,12 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 modifiedmidpointcircle.lbutton(lParam, hwnd);
                 break;
             }
-
-        }
-        break;
-    }
-    case WM_LBUTTONUP: {
-        //break;
-    }
-    case WM_RBUTTONDOWN:
-    {
-        //clipping
-        /*
-        switch (flag) {
-            case 3: {
-                //clip.rbutton();
+            case 11: {
+                pointclipping.lbutton(lParam, hwnd);
                 break;
             }
+
         }
-        */
-        //break;
-        
-    }
-    case WM_RBUTTONUP: {
         break;
     }
     case WM_COMMAND: {
@@ -606,7 +628,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             flag = 2;
             break;
         case ParametricLine_ID:
-            //lineParametric = true;
             flag = 3;
             break;
         case LineDDA_ID:
@@ -630,7 +651,13 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case ModifiedMidpointCircle_ID:
             flag = 10;
             break;
-		case Black_ID:
+        case PointClipping_ID:
+            flag = 11;
+            break;
+        case LineClipping_ID:
+            flag = 11;
+            break;
+        case Black_ID:
 			color = RGB(0, 0, 0);
 			break;
 		case Red_ID:
