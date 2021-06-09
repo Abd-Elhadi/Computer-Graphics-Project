@@ -279,6 +279,17 @@ public:
     }
 };
 
+void draweight(HDC hdc, int x, int y, int xc, int yc) {
+    SetPixel(hdc, xc + x, yc + y, color);
+    SetPixel(hdc, xc - x, yc + y, color);
+    SetPixel(hdc, xc + x, yc - y, color);
+    SetPixel(hdc, xc - x, yc - y, color);
+
+    SetPixel(hdc, xc - y, yc + x, color);
+    SetPixel(hdc, xc + y, yc - x, color);
+    SetPixel(hdc, xc + y, yc + x, color);
+    SetPixel(hdc, xc - y, yc - x, color);
+}
 
 class DirectCircle {
 public:
@@ -810,7 +821,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case Green_ID:
 			color = RGB(0, 200, 0);
 			break;
-		case Clear_ID:
+		case Clear_ID :
 			InvalidateRect(hwnd, NULL, true);
 			break;
         default:
