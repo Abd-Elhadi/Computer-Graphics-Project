@@ -13,7 +13,7 @@ using namespace std;
 
 COLORREF color = RGB(0,0,0);
 
-void Draw4Points(HDC hdc, int xc, int yc, int a, int b, COLORREF color)
+void Draw4Points(HDC hdc, int xc, int yc, int a, int b)
 {
     SetPixel(hdc, xc + a, yc + b, color);
     SetPixel(hdc, xc - a, yc + b, color);
@@ -38,21 +38,19 @@ public:
     void EllipseDirect(HDC hdc, int xc, int yc, int a, int b) {
         int x = 0, y = b;
         double b2 = b * b, a2 = a * a;
-        Draw4Points(hdc, xc, yc, x, y, color);
+        Draw4Points(hdc, xc, yc, x, y);
         while (b * b * x < a * a * y) {
             x++;
             y = round(sqrt(b2 * (double)(1.0 - 1.0 * x * x / a2)));
-            Draw4Points(hdc, xc, yc, x, y, color);
+            Draw4Points(hdc, xc, yc, x, y);
         }
         while (y > 0) {
             y--;
             x = round(sqrt(a2 * (double)(1.0 - 1.0 * y * y / b2)));
-            Draw4Points(hdc, xc, yc, x, y, color);
+            Draw4Points(hdc, xc, yc, x, y);
         }
     }
 };
-
-
 class PolarEllipse {
 public:
     int a = 80, b = 60, xc, yc;
@@ -67,18 +65,16 @@ public:
     }
     void polarellipse(HDC hdc, int xc, int yc, int  a, int  b) {
         int x = a, y = 0;
-        Draw4Points(hdc, xc, yc, x, y, color);
+        Draw4Points(hdc, xc, yc, x, y);
         double f = sqrt(a * a - b * b), e = f / a, b2 = b * b;
         for (double theta = 0.001; theta <= 3.14 / 2; theta += 0.001) {
             double R = a * b / sqrt((b * b * cos(theta) * cos(theta)) + (a * a * sin(theta) * sin(theta)));
             x = round(R * cos(theta));
             y = round(R * sin(theta));
-            Draw4Points(hdc, xc, yc, x, y, color);
+            Draw4Points(hdc, xc, yc, x, y);
         }
     }
 };
-
-
 class Point {
 public:
     double x;
@@ -283,6 +279,7 @@ public:
     }
 };
 
+
 class DirectCircle {
 public:
 
@@ -293,11 +290,23 @@ public:
         xc = LOWORD(lParam);
         yc = HIWORD(lParam);
         hdc = GetDC(hwnd);
-        //Direct(hdc, xc, yc, a);
+        Direct(hdc, xc, yc, a);
         ReleaseDC(hwnd, hdc);
     }
+    void Direct(HDC hdc, int xc, int yc, int r)
+    {
+        int x = r;
+        int y = 0;
+        int R2 = r * r;
+        draweight(hdc, xc, yc, x, y);
+        while (x > y)
+        {
+            y++;
+            x = (sqrt((double)(R2 - y * y)));
+            draweight(hdc, x, y, xc, yc);
+        }
 
-   
+    }
    
 
 private:
@@ -306,19 +315,61 @@ private:
 
 class PolarCircle {
 public:
-    PolarCircle() {
 
-    }
-    ~PolarCircle() {
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
 
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        Polar(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
     }
+    void Polar(HDC hdc, int xc, int yc, int R)
+    {
+        int x = R, y = 0;
+        double theta = 0, dtheta = 1.0 / R;
+        draweight(hdc, xc, yc, x, y);
+        while (x > y)
+        {
+            theta += dtheta;
+            x = round(R * cos(theta));
+            y = round(R * sin(theta));
+            draweight(hdc, x , y ,xc, yc);
+        }
+    }
+
 private:
 };
 
 class InteractiveCircle {
 public:
-    InteractiveCircle();
-    ~InteractiveCircle();
+
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
+
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        CircleIterativePolar(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
+    }
+    void CircleIterativePolar(HDC hdc, int xc, int yc, int R)
+    {
+        double x = R, y = 0;
+        double dtheta = 1.0 / R;
+        double cdtheta = cos(dtheta), sdtheta = sin(dtheta);
+        draweight(hdc, xc, yc, R, 0);
+        while (x > y)
+        {
+            double x1 = x * cdtheta - y * sdtheta;
+            y = x * sdtheta + y * cdtheta;
+            x = x1;
+            draweight(hdc, round(x), round(y), xc, yc);
+        }
+    }
 
 private:
 
@@ -336,17 +387,7 @@ public:
         midpoint(hdc, xc, yc, a);
         ReleaseDC(hwnd, hdc);
     }
-    void draweight(HDC hdc, int x, int y, int xc, int yc) {
-        SetPixel(hdc, xc + x, yc + y, color);
-        SetPixel(hdc, xc - x, yc + y, color);
-        SetPixel(hdc, xc + x, yc - y, color);
-        SetPixel(hdc, xc - x, yc - y, color);
 
-        SetPixel(hdc, xc - y, yc + x, color);
-        SetPixel(hdc, xc + y, yc - x, color);
-        SetPixel(hdc, xc + y, yc + x, color);
-        SetPixel(hdc, xc - y, yc - x, color);
-    }
     void midpoint(HDC hdc, int xc, int yc, int r) {
         int x = 0;
         int y = r;
@@ -369,13 +410,88 @@ public:
 class ModifiedMidpointCircle
 {
 public:
-    ModifiedMidpointCircle();
-    ~ModifiedMidpointCircle();
+
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
+
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        ModifiedMidpoint(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
+    }
+
+    void ModifiedMidpoint(HDC hdc, int xc, int yc, int R)
+    {
+        int x = 0, y = R;
+        int d = 1 - R;
+        int c1 = 3, c2 = 5 - 2 * R;
+        draweight(hdc, xc, yc, x, y);
+        while (x < y)
+        {
+            if (d < 0)
+            {
+                d += c1;
+                c2 += 2;
+            }
+            else
+            {
+                d += c2;
+                c2 += 4;
+                y--;
+            }
+            c1 += 2;
+            x++;
+            draweight(hdc, x, y, xc, yc);
+        }
+    }
 
 private:
 
 };
 
+
+class PointClipping
+{
+public:
+    int counter = 0;
+    Point p1;
+    Point p2;
+    Point p3;
+
+    void lbutton(LPARAM lParam, HWND hwnd) {
+        HDC hdc = GetDC(hwnd);
+        if (counter == 0) {
+            p1.x = LOWORD(lParam);
+            p1.y = HIWORD(lParam);
+            counter++;
+        }
+        else if(counter==1){
+            p2.x = LOWORD(lParam);
+            p2.y = HIWORD(lParam);
+            Rectangle(hdc, p1.x, p1.y , p2.x , p2.y);
+            counter++;
+        }
+        else if(counter == 2) {
+            p3.x = LOWORD(lParam);
+            p3.y = HIWORD(lParam);
+            pointclipping(hdc, p3.x, p3.y, p1.x, p1.y, p2.x, p2.y);
+            counter = 0;
+
+        }
+    }
+    void pointclipping(HDC hdc, int x, int y, int xleft, int ytop, int xright, int ybottom)
+    {
+        if (x >= xleft && x <= xright && y >= ytop && y <= ybottom)
+
+            SetPixel(hdc, x, y, color);
+    }
+
+
+
+
+};
 
 /*  Declare Windows procedure  */
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
@@ -445,18 +561,18 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
     return messages.wParam;
 }
 
-
 /*  This functions are called by the Windows function DispatchMessage()  */
 DirectEllipse directtellipse;
-//direct_circle directcircle;
-//polar_circle polarcircle;
-//interactive_circle interactivecircle;
+DirectCircle directcircle;
+PolarCircle polarcircle;
+InteractiveCircle interactivecircle;
 MidpointCircle midpointcircle;
-//modified_midpoint_circle modifiedmidpointcircle;
+ModifiedMidpointCircle modifiedmidpointcircle;
 PolarEllipse polarEllipse;
 ParametricLine parLine;
 MidpointLine midpoLine;
 DDALine dLine;
+PointClipping pointclipping;
 
 int flag = 0;
 int var;
@@ -492,27 +608,28 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                midpointcircle.lbutton(lParam, hwnd);
                break;
             }
-        }
-        break;
-    }
-    case WM_LBUTTONUP: {
-        //break;
-    }
-    case WM_RBUTTONDOWN:
-    {
-        //clipping
-        /*
-        switch (flag) {
-            case 3: {
-                //clip.rbutton();
+            case 7: {
+                directcircle.lbutton(lParam, hwnd);
                 break;
             }
+            case 8: {
+                polarcircle.lbutton(lParam, hwnd);
+                break;
+            }
+            case 9: {
+                interactivecircle.lbutton(lParam, hwnd);
+                break;
+            }
+            case 10: {
+                modifiedmidpointcircle.lbutton(lParam, hwnd);
+                break;
+            }
+            case 11: {
+                pointclipping.lbutton(lParam, hwnd);
+                break;
+            }
+
         }
-        */
-        //break;
-        
-    }
-    case WM_RBUTTONUP: {
         break;
     }
     case WM_COMMAND: {
@@ -532,7 +649,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             flag = 2;
             break;
         case ParametricLine_ID:
-            //lineParametric = true;
             flag = 3;
             break;
         case LineDDA_ID:
@@ -544,7 +660,25 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case MidpointCircle_ID:
             flag = 6;
             break;
-		case Black_ID:
+        case DirectCircle_ID:
+            flag = 7;
+            break;
+        case PolarCircle_ID:
+            flag = 8;
+            break;
+        case InterActivePolarCircle_ID:
+            flag = 9;
+            break;
+        case ModifiedMidpointCircle_ID:
+            flag = 10;
+            break;
+        case PointClipping_ID:
+            flag = 11;
+            break;
+        case LineClipping_ID:
+            flag = 11;
+            break;
+        case Black_ID:
 			color = RGB(0, 0, 0);
 			break;
 		case Red_ID:
@@ -556,7 +690,9 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		case Green_ID:
 			color = RGB(0, 200, 0);
 			break;
-
+		case Clear_ID:
+			InvalidateRect(hwnd, NULL, true);
+			break;
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
         }
