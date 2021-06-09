@@ -246,6 +246,19 @@ public:
 };
 
 
+void draweight(HDC hdc, int x, int y, int xc, int yc) {
+    SetPixel(hdc, xc + x, yc + y, color);
+    SetPixel(hdc, xc - x, yc + y, color);
+    SetPixel(hdc, xc + x, yc - y, color);
+    SetPixel(hdc, xc - x, yc - y, color);
+
+    SetPixel(hdc, xc - y, yc + x, color);
+    SetPixel(hdc, xc + y, yc - x, color);
+    SetPixel(hdc, xc + y, yc + x, color);
+    SetPixel(hdc, xc - y, yc - x, color);
+}
+
+
 class DirectCircle {
 public:
 
@@ -256,11 +269,23 @@ public:
         xc = LOWORD(lParam);
         yc = HIWORD(lParam);
         hdc = GetDC(hwnd);
-        //Direct(hdc, xc, yc, a);
+        Direct(hdc, xc, yc, a);
         ReleaseDC(hwnd, hdc);
     }
+    void Direct(HDC hdc, int xc, int yc, int r)
+    {
+        int x = r;
+        int y = 0;
+        int R2 = r * r;
+        draweight(hdc, xc, yc, x, y);
+        while (x > y)
+        {
+            y++;
+            x = (sqrt((double)(R2 - y * y)));
+            draweight(hdc, x, y, xc, yc);
+        }
 
-   
+    }
    
 
 private:
@@ -269,19 +294,61 @@ private:
 
 class PolarCircle {
 public:
-    PolarCircle() {
 
-    }
-    ~PolarCircle() {
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
 
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        Polar(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
     }
+    void Polar(HDC hdc, int xc, int yc, int R)
+    {
+        int x = R, y = 0;
+        double theta = 0, dtheta = 1.0 / R;
+        draweight(hdc, xc, yc, x, y);
+        while (x > y)
+        {
+            theta += dtheta;
+            x = round(R * cos(theta));
+            y = round(R * sin(theta));
+            draweight(hdc, x , y ,xc, yc);
+        }
+    }
+
 private:
 };
 
 class InteractiveCircle {
 public:
-    InteractiveCircle();
-    ~InteractiveCircle();
+
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
+
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        CircleIterativePolar(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
+    }
+    void CircleIterativePolar(HDC hdc, int xc, int yc, int R)
+    {
+        double x = R, y = 0;
+        double dtheta = 1.0 / R;
+        double cdtheta = cos(dtheta), sdtheta = sin(dtheta);
+        draweight(hdc, xc, yc, R, 0);
+        while (x > y)
+        {
+            double x1 = x * cdtheta - y * sdtheta;
+            y = x * sdtheta + y * cdtheta;
+            x = x1;
+            draweight(hdc, round(x), round(y), xc, yc);
+        }
+    }
 
 private:
 
@@ -299,17 +366,7 @@ public:
         midpoint(hdc, xc, yc, a);
         ReleaseDC(hwnd, hdc);
     }
-    void draweight(HDC hdc, int x, int y, int xc, int yc) {
-        SetPixel(hdc, xc + x, yc + y, color);
-        SetPixel(hdc, xc - x, yc + y, color);
-        SetPixel(hdc, xc + x, yc - y, color);
-        SetPixel(hdc, xc - x, yc - y, color);
 
-        SetPixel(hdc, xc - y, yc + x, color);
-        SetPixel(hdc, xc + y, yc - x, color);
-        SetPixel(hdc, xc + y, yc + x, color);
-        SetPixel(hdc, xc - y, yc - x, color);
-    }
     void midpoint(HDC hdc, int xc, int yc, int r) {
         int x = 0;
         int y = r;
@@ -335,8 +392,42 @@ public:
 class ModifiedMidpointCircle
 {
 public:
-    ModifiedMidpointCircle();
-    ~ModifiedMidpointCircle();
+
+    int a = 80, xc, yc;
+    HDC hdc;
+    void lbutton(LPARAM lParam, HWND hwnd) {
+
+        xc = LOWORD(lParam);
+        yc = HIWORD(lParam);
+        hdc = GetDC(hwnd);
+        ModifiedMidpoint(hdc, xc, yc, a);
+        ReleaseDC(hwnd, hdc);
+    }
+
+    void ModifiedMidpoint(HDC hdc, int xc, int yc, int R)
+    {
+        int x = 0, y = R;
+        int d = 1 - R;
+        int c1 = 3, c2 = 5 - 2 * R;
+        draweight(hdc, xc, yc, x, y);
+        while (x < y)
+        {
+            if (d < 0)
+            {
+                d += c1;
+                c2 += 2;
+            }
+            else
+            {
+                d += c2;
+                c2 += 4;
+                y--;
+            }
+            c1 += 2;
+            x++;
+            draweight(hdc, x, y, xc, yc);
+        }
+    }
 
 private:
 
@@ -413,11 +504,11 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
 
 /*  This functions are called by the Windows function DispatchMessage()  */
 DirectEllipse directtellipse;
-//direct_circle directcircle;
-//polar_circle polarcircle;
-//interactive_circle interactivecircle;
+DirectCircle directcircle;
+PolarCircle polarcircle;
+InteractiveCircle interactivecircle;
 MidpointCircle midpointcircle;
-//modified_midpoint_circle modifiedmidpointcircle;
+ModifiedMidpointCircle modifiedmidpointcircle;
 PolarEllipse polarEllipse;
 ParametricLine parLine;
 MidpointLine midpoLine;
@@ -457,6 +548,23 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                midpointcircle.lbutton(lParam, hwnd);
                break;
             }
+            case 7: {
+                directcircle.lbutton(lParam, hwnd);
+                break;
+            }
+            case 8: {
+                polarcircle.lbutton(lParam, hwnd);
+                break;
+            }
+            case 9: {
+                interactivecircle.lbutton(lParam, hwnd);
+                break;
+            }
+            case 10: {
+                modifiedmidpointcircle.lbutton(lParam, hwnd);
+                break;
+            }
+
         }
         break;
     }
@@ -508,6 +616,18 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			break;
         case MidpointCircle_ID:
             flag = 6;
+            break;
+        case DirectCircle_ID:
+            flag = 7;
+            break;
+        case PolarCircle_ID:
+            flag = 8;
+            break;
+        case InterActivePolarCircle_ID:
+            flag = 9;
+            break;
+        case ModifiedMidpointCircle_ID:
+            flag = 10;
             break;
 		case Black_ID:
 			color = RGB(0, 0, 0);
